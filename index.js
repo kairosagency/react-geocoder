@@ -1,7 +1,7 @@
 var React = require('react');
 
 //var provider = require('./providers/nominatim');
-var provider = (require('./providers/mapquest'))('7G2xKanCM4medWkGQXXeD3Z8jhuay5Dh');
+//var provider = (require('./providers/mapquest'))('7G2xKanCM4medWkGQXXeD3Z8jhuay5Dh');
 
 
 /**
@@ -11,7 +11,7 @@ var provider = (require('./providers/mapquest'))('7G2xKanCM4medWkGQXXeD3Z8jhuay5
 var Geocoder = React.createClass({
   getDefaultProps() {
     return {
-      provider: 'nominatim',
+      provider: require('./providers/nominatim'),
       inputClass: '',
       resultClass: '',
       resultsClass: '',
@@ -35,7 +35,7 @@ var Geocoder = React.createClass({
   },
   propTypes: {
     endpoint: React.PropTypes.string,
-    provider: React.PropTypes.string,
+    provider: React.PropTypes.object,
     source: React.PropTypes.string,
     inputClass: React.PropTypes.string,
     resultClass: React.PropTypes.string,
