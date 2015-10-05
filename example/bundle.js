@@ -22,7 +22,6 @@ var Example = React.createClass({
         'div',
         { className: 'clearfix pad1' },
         React.createElement(Geocoder, {
-          accessToken: 'pk.eyJ1IjoidG1jdyIsImEiOiJIZmRUQjRBIn0.lRARalfaGHnPdRcc-7QZYQ',
           onSelect: this.onSelect,
           showLoader: true
         })
@@ -51,9 +50,6 @@ React.render(React.createElement(Example, null), document.getElementById('app'))
 
 var React = require('react');
 
-//var provider = require('./providers/nominatim');
-var provider = require('./providers/mapquest')('7G2xKanCM4medWkGQXXeD3Z8jhuay5Dh');
-
 /**
  * Geocoder component: connects to Mapbox.com Geocoding API
  * and provides an autocompleting interface for finding locations.
@@ -63,7 +59,8 @@ var Geocoder = React.createClass({
 
   getDefaultProps: function getDefaultProps() {
     return {
-      provider: 'nominatim',
+      provider: require('./providers/nominatim'),
+      params: {},
       inputClass: '',
       resultClass: '',
       resultsClass: '',
@@ -71,8 +68,7 @@ var Geocoder = React.createClass({
       inputPosition: 'top',
       inputPlaceholder: 'Search',
       showLoader: false,
-      source: 'mapbox.places',
-      proximity: '',
+      trigger: 5,
       onSuggest: function onSuggest() {},
       focusOnMount: true
     };
@@ -86,9 +82,8 @@ var Geocoder = React.createClass({
     };
   },
   propTypes: {
-    endpoint: React.PropTypes.string,
-    provider: React.PropTypes.string,
-    source: React.PropTypes.string,
+    provider: React.PropTypes.object,
+    params: React.PropTypes.object,
     inputClass: React.PropTypes.string,
     resultClass: React.PropTypes.string,
     resultsClass: React.PropTypes.string,
@@ -97,7 +92,7 @@ var Geocoder = React.createClass({
     resultFocusClass: React.PropTypes.string,
     onSelect: React.PropTypes.func.isRequired,
     onSuggest: React.PropTypes.func,
-    proximity: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.shape({ lat: React.PropTypes.number, lng: React.PropTypes.number }), React.PropTypes.shape({ lat: React.PropTypes.number, lon: React.PropTypes.number }), React.PropTypes.shape({ lattitude: React.PropTypes.number, longitude: React.PropTypes.number })]),
+    trigger: React.PropTypes.number,
     showLoader: React.PropTypes.bool,
     focusOnMount: React.PropTypes.bool
   },
@@ -108,34 +103,30 @@ var Geocoder = React.createClass({
   onInput: function onInput(e) {
     this.setState({ loading: true });
     var value = e.target.value;
-    if (value === '') {
+    if (value === '' || value.length < this.props.trigger) {
       this.setState({
         results: [],
         focus: null,
         loading: false
       });
     } else {
-      var params = [value, this.onResult];
-      if (this.props.source) {
-        params.push(this.props.source);
-      }
-      if (this.props.proximity) {
-        params.push(this.props.proximity);
-      }
-      provider.search.apply(provider, params);
+      this.props.provider.search(value, this.props.params, this.onResult);
     }
   },
+
   moveFocus: function moveFocus(dir) {
     if (this.state.loading) return;
     this.setState({
       focus: this.state.focus === null ? 0 : Math.max(0, Math.min(this.state.results.length - 1, this.state.focus + dir))
     });
   },
+
   acceptFocus: function acceptFocus() {
     if (this.state.focus !== null) {
       this.props.onSelect(this.state.results[this.state.focus]);
     }
   },
+
   onKeyDown: function onKeyDown(e) {
     switch (e.which) {
       // up
@@ -156,6 +147,7 @@ var Geocoder = React.createClass({
         break;
     }
   },
+
   onResult: function onResult(err, res, body, searchTime) {
     // searchTime is compared with the last search to set the state
     // to ensure that a slow xhr response does not scramble the
@@ -170,22 +162,25 @@ var Geocoder = React.createClass({
       this.props.onSuggest(this.state.results);
     }
   },
+
   clickOption: function clickOption(place, listLocation) {
-    this.props.onSelect(place);
     this.setState({ focus: listLocation });
     // focus on the input after click to maintain key traversal
     React.findDOMNode(this.refs.input).focus();
-    return false;
+    return this.props.onSelect;
   },
+
   render: function render() {
     var _this = this;
 
+    var self = this;
     var input = React.createElement('input', {
       ref: 'input',
       className: this.props.inputClass,
       onInput: this.onInput,
       onKeyDown: this.onKeyDown,
       placeholder: this.props.inputPlaceholder,
+      valueLink: this.props.valueLink,
       type: 'text' });
     return React.createElement(
       'div',
@@ -201,7 +196,9 @@ var Geocoder = React.createClass({
             React.createElement(
               'a',
               { href: '#',
-                onClick: _this.clickOption.bind(_this, result, i),
+                onClick: function (e) {
+                  e.data = result;self.setState({ results: [] });return self.clickOption(result, i)(e);
+                },
                 className: _this.props.resultClass + ' ' + (i === _this.state.focus ? _this.props.resultFocusClass : ''),
                 key: result.id },
               result.place_name
@@ -216,7 +213,7 @@ var Geocoder = React.createClass({
 
 module.exports = Geocoder;
 
-},{"./providers/mapquest":170,"react":161}],3:[function(require,module,exports){
+},{"./providers/nominatim":170,"react":161}],3:[function(require,module,exports){
 var isFunction = require('is-function')
 
 module.exports = forEach
@@ -23407,40 +23404,50 @@ function once (fn) {
 var xhr = require('xhr');
 var uri = require('urijs');
 
-var mapquest = function mapquest(_access_token) {
-  return {
-    access_token: _access_token,
+var nominatim = {
+  format: 'json',
 
-    format: 'json',
+  limit: 5,
 
-    limit: 5,
+  endpoint: uri('http://nominatim.openstreetmap.org/search'),
 
-    endpoint: uri('http://open.mapquestapi.com/nominatim/v1/search.php'),
+  search: function search(query, params, callback) {
+    if (query) {
+      var queryParams = { q: query, format: this.format, limit: this.limit };
+      var request = this.endpoint.clone();
 
-    search: function search(query, callback) {
-
-      if (query) {
-        var request = this.endpoint.clone().query({ q: query, format: this.format, limit: 5, key: this.access_token });
-        var searchTime = new Date();
-
-        xhr({
-          uri: request.toString(),
-          json: true
-        }, function (err, res, body) {
-          if (body) {
-            body.map(function (elt) {
-              elt.id = elt.place_id;elt.place_name = elt.display_name;
-            });
-          }
-          callback(err, res, body, searchTime);
-        });
-      } else {
-        throw new Error("null query");
+      if (params.countrycodes) {
+        if (typeof params.countrycodes == "string") {
+          params.countrycodes = [params.countrycodes];
+        }
+        queryParams.countrycodes = params.countrycodes.join(',');
       }
+
+      request.query(params);
+
+      var searchTime = new Date();
+      xhr({
+        uri: request.toString(),
+        json: true
+      }, function (err, res, body) {
+        if (body) {
+          body.map(function (elt) {
+            //alias variable
+            elt.id = elt.place_id;
+            elt.place_name = elt.display_name;
+            elt.lng = elt.lon;
+            elt.longitude = elt.lon;
+            elt.latitude = elt.lat;
+          });
+        }
+        callback(err, res, body, searchTime);
+      });
+    } else {
+      throw new Error("null query");
     }
-  };
+  }
 };
 
-module.exports = mapquest;
+module.exports = nominatim;
 
 },{"urijs":165,"xhr":168}]},{},[1]);

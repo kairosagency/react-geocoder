@@ -1,9 +1,5 @@
 var React = require('react');
 
-//var provider = require('./providers/nominatim');
-//var provider = (require('./providers/mapquest'))('7G2xKanCM4medWkGQXXeD3Z8jhuay5Dh');
-
-
 /**
  * Geocoder component: connects to Mapbox.com Geocoding API
  * and provides an autocompleting interface for finding locations.
@@ -12,6 +8,7 @@ var Geocoder = React.createClass({
   getDefaultProps() {
     return {
       provider: require('./providers/nominatim'),
+      params: {},
       inputClass: '',
       resultClass: '',
       resultsClass: '',
@@ -19,8 +16,6 @@ var Geocoder = React.createClass({
       inputPosition: 'top',
       inputPlaceholder: 'Search',
       showLoader: false,
-      source: 'mapbox.places',
-      proximity: '',
       trigger: 5,
       onSuggest: function() {},
       focusOnMount: true
@@ -35,9 +30,8 @@ var Geocoder = React.createClass({
     };
   },
   propTypes: {
-    endpoint: React.PropTypes.string,
     provider: React.PropTypes.object,
-    source: React.PropTypes.string,
+    params: React.PropTypes.object,
     inputClass: React.PropTypes.string,
     resultClass: React.PropTypes.string,
     resultsClass: React.PropTypes.string,
@@ -46,12 +40,6 @@ var Geocoder = React.createClass({
     resultFocusClass: React.PropTypes.string,
     onSelect: React.PropTypes.func.isRequired,
     onSuggest: React.PropTypes.func,
-    proximity: React.PropTypes.oneOfType([
-      React.PropTypes.string,
-      React.PropTypes.shape({lat: React.PropTypes.number,lng: React.PropTypes.number}),
-      React.PropTypes.shape({lat: React.PropTypes.number,lon: React.PropTypes.number}),
-      React.PropTypes.shape({lattitude: React.PropTypes.number,longitude: React.PropTypes.number})
-    ]),
     trigger: React.PropTypes.number,
     showLoader: React.PropTypes.bool,
     focusOnMount: React.PropTypes.bool
@@ -70,16 +58,10 @@ var Geocoder = React.createClass({
         loading:false
       });
     } else {
-      var params = [value, this.onResult];
-      if(this.props.source) {
-        params.push(this.props.source);
-      }
-      if(this.props.proximity) {
-        params.push(this.props.proximity);
-      }
-      this.props.provider.search.apply(this.props.provider,params);
+      this.props.provider.search(value, this.props.params, this.onResult);
     }
   },
+
   moveFocus(dir) {
     if(this.state.loading) return;
     this.setState({
@@ -90,11 +72,13 @@ var Geocoder = React.createClass({
             this.state.focus + dir))
     });
   },
+
   acceptFocus() {
     if (this.state.focus !== null) {
       this.props.onSelect(this.state.results[this.state.focus]);
     }
   },
+
   onKeyDown(e) {
     switch (e.which) {
       // up
@@ -115,6 +99,7 @@ var Geocoder = React.createClass({
         break;
     }
   },
+
   onResult(err, res, body, searchTime) {
     // searchTime is compared with the last search to set the state
     // to ensure that a slow xhr response does not scramble the
@@ -129,19 +114,23 @@ var Geocoder = React.createClass({
       this.props.onSuggest(this.state.results);
     }
   },
+
   clickOption(place, listLocation) {
     this.setState({focus:listLocation});
     // focus on the input after click to maintain key traversal
     React.findDOMNode(this.refs.input).focus();
     return this.props.onSelect;
   },
+
   render() {
+    var self = this;
     var input = <input
       ref='input'
       className={this.props.inputClass}
       onInput={this.onInput}
       onKeyDown={this.onKeyDown}
       placeholder={this.props.inputPlaceholder}
+      valueLink={this.props.valueLink}
       type='text' />;
     return (
       <div>
@@ -151,7 +140,7 @@ var Geocoder = React.createClass({
             {this.state.results.map((result, i) => (
               <li key={result.id}>
                 <a href='#'
-                  onClick={function(e){ e.data = result; return (self.clickOption(result, i))(e);}}
+                  onClick={function(e){ e.data = result; self.setState({results: []}); return (self.clickOption(result, i))(e);}}
                   className={this.props.resultClass + ' ' + (i === this.state.focus ? this.props.resultFocusClass : '')}
                   key={result.id}>{result.place_name}</a>
               </li>

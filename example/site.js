@@ -19,7 +19,6 @@ var Example = React.createClass({
               showLoader  -- Boolean to attach `.loading` class to results list
           */}
           <Geocoder
-            accessToken='pk.eyJ1IjoidG1jdyIsImEiOiJIZmRUQjRBIn0.lRARalfaGHnPdRcc-7QZYQ'
             onSelect={this.onSelect}
             showLoader={true}
             />
