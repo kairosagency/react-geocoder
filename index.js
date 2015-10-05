@@ -21,6 +21,7 @@ var Geocoder = React.createClass({
       showLoader: false,
       source: 'mapbox.places',
       proximity: '',
+      trigger: 5,
       onSuggest: function() {},
       focusOnMount: true
     };
@@ -51,6 +52,7 @@ var Geocoder = React.createClass({
       React.PropTypes.shape({lat: React.PropTypes.number,lon: React.PropTypes.number}),
       React.PropTypes.shape({lattitude: React.PropTypes.number,longitude: React.PropTypes.number})
     ]),
+    trigger: React.PropTypes.number,
     showLoader: React.PropTypes.bool,
     focusOnMount: React.PropTypes.bool
   },
@@ -61,7 +63,7 @@ var Geocoder = React.createClass({
   onInput(e) {
     this.setState({loading:true});
     var value = e.target.value;
-    if (value === '') {
+    if (value === '' || value.length < this.props.trigger) {
       this.setState({
         results: [],
         focus: null,
@@ -75,7 +77,7 @@ var Geocoder = React.createClass({
       if(this.props.proximity) {
         params.push(this.props.proximity);
       }
-      provider.search.apply(provider,params);
+      this.props.provider.search.apply(this.props.provider,params);
     }
   },
   moveFocus(dir) {
