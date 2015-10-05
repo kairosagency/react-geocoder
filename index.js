@@ -1,5 +1,8 @@
-var React = require('react'),
-  search = require('./search');
+var React = require('react');
+
+//var provider = require('./providers/nominatim');
+var provider = (require('./providers/mapquest'))('7G2xKanCM4medWkGQXXeD3Z8jhuay5Dh');
+
 
 /**
  * Geocoder component: connects to Mapbox.com Geocoding API
@@ -8,7 +11,7 @@ var React = require('react'),
 var Geocoder = React.createClass({
   getDefaultProps() {
     return {
-      endpoint: 'https://api.tiles.mapbox.com',
+      provider: 'nominatim',
       inputClass: '',
       resultClass: '',
       resultsClass: '',
@@ -32,6 +35,7 @@ var Geocoder = React.createClass({
   },
   propTypes: {
     endpoint: React.PropTypes.string,
+    provider: React.PropTypes.string,
     source: React.PropTypes.string,
     inputClass: React.PropTypes.string,
     resultClass: React.PropTypes.string,
@@ -41,14 +45,19 @@ var Geocoder = React.createClass({
     resultFocusClass: React.PropTypes.string,
     onSelect: React.PropTypes.func.isRequired,
     onSuggest: React.PropTypes.func,
-    accessToken: React.PropTypes.string.isRequired,
-    proximity: React.PropTypes.string,
+    proximity: React.PropTypes.oneOfType([
+      React.PropTypes.string,
+      React.PropTypes.shape({lat: React.PropTypes.number,lng: React.PropTypes.number}),
+      React.PropTypes.shape({lat: React.PropTypes.number,lon: React.PropTypes.number}),
+      React.PropTypes.shape({lattitude: React.PropTypes.number,longitude: React.PropTypes.number})
+    ]),
     showLoader: React.PropTypes.bool,
     focusOnMount: React.PropTypes.bool
   },
   componentDidMount() {
     if (this.props.focusOnMount) React.findDOMNode(this.refs.input).focus();
   },
+
   onInput(e) {
     this.setState({loading:true});
     var value = e.target.value;
@@ -59,13 +68,14 @@ var Geocoder = React.createClass({
         loading:false
       });
     } else {
-      search(
-        this.props.endpoint,
-        this.props.source,
-        this.props.accessToken,
-        this.props.proximity,
-        value,
-        this.onResult);
+      var params = [value, this.onResult];
+      if(this.props.source) {
+        params.push(this.props.source);
+      }
+      if(this.props.proximity) {
+        params.push(this.props.proximity);
+      }
+      provider.search.apply(provider,params);
     }
   },
   moveFocus(dir) {
@@ -107,11 +117,11 @@ var Geocoder = React.createClass({
     // searchTime is compared with the last search to set the state
     // to ensure that a slow xhr response does not scramble the
     // sequence of autocomplete display.
-    if (!err && body && body.features && this.state.searchTime <= searchTime) {
+    if (!err && body && this.state.searchTime <= searchTime) {
       this.setState({
         searchTime: searchTime,
         loading: false,
-        results: body.features,
+        results: body,
         focus: null
       });
       this.props.onSuggest(this.state.results);
