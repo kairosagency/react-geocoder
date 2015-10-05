@@ -10,18 +10,23 @@ var nominatim = {
   endpoint: uri('http://nominatim.openstreetmap.org/search'),
 
   search: function(query, callback) {
-    console.log(this);
     if(query) {
-
       var request = this.endpoint.clone().query({q: query, format: this.format, limit: 5});
       var searchTime = new Date();
-      console.log(query, request.toString());
       xhr({
       uri: request.toString(),
       json: true
       }, function(err, res, body) {
         if(body) {
-          body.map(function(elt) { elt.id = elt.place_id; elt.place_name = elt.display_name });
+          body.map(function(elt) {
+            //alias variable
+            elt.id = elt.place_id;
+            elt.place_name =
+            elt.display_name
+            body.lng = body.lon;
+            body.longitude = body.lon;
+            body.latitude = body.lat;
+          });
         }
         callback(err, res, body, searchTime);
       });

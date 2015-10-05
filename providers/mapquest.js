@@ -23,7 +23,15 @@ var mapquest = function(_access_token) {
         json: true
         }, function(err, res, body) {
           if(body) {
-            body.map(function(elt) { elt.id = elt.place_id; elt.place_name = elt.display_name });
+            body.map(function(elt) {
+              //alias variable
+              elt.id = elt.place_id;
+              elt.place_name =
+              elt.display_name
+              body.lng = body.lon;
+              body.longitude = body.lon;
+              body.latitude = body.lat;
+            });
           }
           callback(err, res, body, searchTime);
         });
