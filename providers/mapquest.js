@@ -10,30 +10,33 @@ var mapquest = function(_access_token) {
 
     limit: 5,
 
-    endpoint: uri('http://open.mapquestapi.com/nominatim/v1/search.php'),
+    endpoint: uri('http://open.mapquestapi.com/geocoding/v1/address'),
 
     search: function(query, callback) {
 
       if(query) {
-        var request = this.endpoint.clone().query({q: query, format: this.format, limit: 5, key: this.access_token});
+        var request = this.endpoint.clone().query({location: query, outFormat: this.format, key: this.access_token, maxResults: this.limit});
         var searchTime = new Date();
 
         xhr({
         uri: request.toString(),
         json: true
         }, function(err, res, body) {
-          if(body) {
-            body.map(function(elt) {
+          var locations = [];
+          if(body && body.results && body.results.locations.length > 0) {
+            locations = body.results.locations;
+            locations.map(function(elt, index) {
               //alias variable
-              elt.id = elt.place_id;
-              elt.place_name =
-              elt.display_name
-              body.lng = body.lon;
-              body.longitude = body.lon;
-              body.latitude = body.lat;
+              elt.id = elt.providedLocation.id;
+              elt.place_name = elt.street + " " + elt.postalCode ;
+              elt.lng = elt.latLng.lng;
+              elt.longitude = elt.lng;
+              elt.lon = elt.lng;
+              elt.latitude = elt.latLng.lat;
+              elt.lat = elt.latitude;
             });
           }
-          callback(err, res, body, searchTime);
+          callback(err, res, locations, searchTime);
         });
       } else {
         throw new Error("null query");

@@ -9,9 +9,20 @@ var nominatim = {
 
   endpoint: uri('http://nominatim.openstreetmap.org/search'),
 
-  search: function(query, callback) {
+  search: function(query, params, callback) {
     if(query) {
-      var request = this.endpoint.clone().query({q: query, format: this.format, limit: 5});
+      var queryParams = {q: query, format: this.format, limit: this.limit};
+      var request = this.endpoint.clone();
+
+      if(params.countrycodes) {
+        if(typeof params.countrycodes == "string") {
+          params.countrycodes = [params.countrycodes];
+        }
+        queryParams.countrycodes = params.countrycodes.join(',');
+      }
+
+      request.query(params);
+
       var searchTime = new Date();
       xhr({
       uri: request.toString(),
@@ -21,11 +32,10 @@ var nominatim = {
           body.map(function(elt) {
             //alias variable
             elt.id = elt.place_id;
-            elt.place_name =
-            elt.display_name
-            body.lng = body.lon;
-            body.longitude = body.lon;
-            body.latitude = body.lat;
+            elt.place_name = elt.display_name;
+            elt.lng = elt.lon;
+            elt.longitude = elt.lon;
+            elt.latitude = elt.lat;
           });
         }
         callback(err, res, body, searchTime);
