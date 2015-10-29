@@ -21,7 +21,7 @@ var nominatim = {
         queryParams.countrycodes = params.countrycodes.join(',');
       }
 
-      request.query(params);
+      request.query(queryParams);
 
       var searchTime = new Date();
       xhr({

@@ -40,7 +40,6 @@ var Example = React.createClass({
 React.render(React.createElement(Example, null), document.getElementById('app'));
 /* jshint ignore:end */
 /* Geocoder:
-   accessToken -- Mapbox developer access token (required)
    onSelect    -- function called after selecting result (required)
    showLoader  -- Boolean to attach `.loading` class to results list
 */
@@ -23423,7 +23422,7 @@ var nominatim = {
         queryParams.countrycodes = params.countrycodes.join(',');
       }
 
-      request.query(params);
+      request.query(queryParams);
 
       var searchTime = new Date();
       xhr({

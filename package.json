@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "tape test.js",
-    "start": "watchify example/site.js -o example/bundle.js & st -nc"
+    "start": "watchify example/site.js -o example/bundle.js"
   },
   "repository": {
     "type": "git",
@@ -33,7 +33,6 @@
   "homepage": "https://github.com/kairosagency/react-geocoder",
   "devDependencies": {
     "browserify": "^6.2.0",
-    "st": "^0.5.2",
     "watchify": "^2.1.0"
   },
   "dependencies": {

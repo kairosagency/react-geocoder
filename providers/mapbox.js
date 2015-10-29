@@ -2,10 +2,10 @@ var xhr = require('xhr'),
   uri = require('urijs');
 
 
-var mapbox = function(access_token) {
+var mapbox = function(_access_token) {
 
   return {
-    access_token: access_token,
+    access_token: _access_token,
 
     format: 'json',
 

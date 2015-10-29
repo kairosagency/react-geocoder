@@ -14,7 +14,6 @@ var Example = React.createClass({
       <div>
         <div className='clearfix pad1'>
           {/* Geocoder:
-              accessToken -- Mapbox developer access token (required)
               onSelect    -- function called after selecting result (required)
               showLoader  -- Boolean to attach `.loading` class to results list
           */}

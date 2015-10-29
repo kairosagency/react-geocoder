@@ -26,7 +26,7 @@ var mapquest = function(_access_token) {
         }
 
 
-        request.query(params);
+        request.query(queryParams);
 
         var searchTime = new Date();
         xhr({
