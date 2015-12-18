@@ -32,13 +32,13 @@
   },
   "homepage": "https://github.com/kairosagency/react-geocoder",
   "devDependencies": {
-    "browserify": "^6.2.0",
-    "watchify": "^2.1.0"
+    "browserify": "~12.0",
+    "watchify": "~3.5.0",
+    "babelify": "~7.0"
   },
   "dependencies": {
     "xhr": "^1.17.0",
     "urijs": "~1.16.1",
-    "babelify": "^6.0.0",
     "react": "~0.14.0"
   }
 }
