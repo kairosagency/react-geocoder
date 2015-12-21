@@ -39,6 +39,7 @@
   "dependencies": {
     "xhr": "^1.17.0",
     "urijs": "~1.16.1",
-    "react": "~0.14.0"
+    "react": "~0.14.0",
+    "react-dom": "~0.14.0"
   }
 }
