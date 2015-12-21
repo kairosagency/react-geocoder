@@ -1,4 +1,5 @@
 var React = require('react');
+var ReactDOM = require('react-dom');
 
 /**
  * Geocoder component: connects to Mapbox.com Geocoding API
@@ -45,7 +46,7 @@ var Geocoder = React.createClass({
     focusOnMount: React.PropTypes.bool
   },
   componentDidMount() {
-    if (this.props.focusOnMount) React.findDOMNode(this.refs.input).focus();
+    if (this.props.focusOnMount) ReactDOM.findDOMNode(this.refs.input).focus();
   },
 
   onInput(e) {
@@ -118,7 +119,7 @@ var Geocoder = React.createClass({
   clickOption(place, listLocation) {
     this.setState({focus:listLocation});
     // focus on the input after click to maintain key traversal
-    React.findDOMNode(this.refs.input).focus();
+    ReactDOM.findDOMNode(this.refs.input).focus();
     return this.props.onSelect;
   },
 
